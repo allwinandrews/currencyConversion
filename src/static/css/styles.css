@@ -1,0 +1,19 @@
+.container {
+  width: 900px;
+  height: 600px;
+
+  position: absolute; /*it can be fixed too*/
+  left: 0;
+  right: 0;
+  top: 0;
+  bottom: 0;
+  margin: auto;
+}
+ul {
+  height: 500px;
+  width: 100%;
+}
+ul {
+  overflow: hidden;
+  overflow-y: scroll;
+}
