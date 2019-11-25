@@ -9,11 +9,9 @@
   bottom: 0;
   margin: auto;
 }
-ul {
+.list {
   height: 500px;
   width: 100%;
-}
-ul {
   overflow: hidden;
   overflow-y: scroll;
 }

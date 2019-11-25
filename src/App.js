@@ -7,7 +7,12 @@ import {
   Container,
   Row,
   Col,
-  Badge
+  Badge,
+  Dropdown,
+  DropdownToggle,
+  DropdownMenu,
+  DropdownItem,
+  Input
 } from "reactstrap";
 
 import {
@@ -27,6 +32,10 @@ export default function App() {
   const [history, setHistory] = useState([]);
   const [historyCount, setHistoryCount] = useState(10);
   const [date, setDate] = useState("2010-10-10");
+  const [dropdownOpen, setDropdownOpen] = useState(false);
+  const [countryDropDown, setCountryDropDown] = useState(false);
+
+  const toggle = () => setDropdownOpen(!dropdownOpen);
 
   // "live" - get the most recent exchange rate data
   const fetchLive = () => {
@@ -120,12 +129,20 @@ export default function App() {
       });
   };
 
+  const countryDropDownFilter = () => {};
+
   useEffect(() => {
     fetchLive();
     fetchHistorical();
     // fetchConversionRates();
     // fetchTimeAccording();
     // fetchChange();
+    const countryDropDownItems = Object.keys(countries).map(key => {
+      return { label: countries[key], value: key };
+      // <DropdownItem value={key}>{countries[key]}</DropdownItem>;
+    });
+    console.log(countryDropDownItems);
+    // setCountryDropDown(countryDropDownItems);
   }, []);
 
   return (
@@ -135,7 +152,7 @@ export default function App() {
           <h3>
             <Badge color="primary">Most recent exchange rate</Badge>
           </h3>
-          <ListGroup>{live.slice(0, liveCount)}</ListGroup>
+          <ListGroup className="list">{live.slice(0, liveCount)}</ListGroup>
           <Button color="primary" onClick={() => setLiveCount(liveCount + 10)}>
             Load More..
           </Button>
@@ -144,7 +161,9 @@ export default function App() {
           <h3>
             <Badge color="danger">Historical rates for {date}</Badge>
           </h3>
-          <ListGroup>{history.slice(0, historyCount)}</ListGroup>
+          <ListGroup className="list">
+            {history.slice(0, historyCount)}
+          </ListGroup>
           <Button
             color="danger"
             onClick={() => setHistoryCount(historyCount + 10)}
@@ -152,7 +171,20 @@ export default function App() {
             Load More..
           </Button>
         </Col>
-        <Col sm="4">.col-sm-4</Col>
+        <Col sm="4">
+          <Dropdown isOpen={dropdownOpen} toggle={toggle}>
+            <DropdownToggle caret>{"Country"}</DropdownToggle>
+            <DropdownMenu
+              style={{
+                height: "500px",
+                overflow: "auto"
+              }}
+            >
+              <Input placeholder="Search..." onChange={countryDropDownFilter} />
+              {countryDropDown}
+            </DropdownMenu>
+          </Dropdown>
+        </Col>
       </Row>
     </Container>
   );
