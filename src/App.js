@@ -7,13 +7,9 @@ import {
   Container,
   Row,
   Col,
-  Badge,
-  Dropdown,
-  DropdownToggle,
-  DropdownMenu,
-  DropdownItem,
-  Input
+  Badge
 } from "reactstrap";
+import Select from "react-select";
 
 import {
   LIVE_URL,
@@ -32,10 +28,7 @@ export default function App() {
   const [history, setHistory] = useState([]);
   const [historyCount, setHistoryCount] = useState(10);
   const [date, setDate] = useState("2010-10-10");
-  const [dropdownOpen, setDropdownOpen] = useState(false);
   const [countryDropDown, setCountryDropDown] = useState(false);
-
-  const toggle = () => setDropdownOpen(!dropdownOpen);
 
   // "live" - get the most recent exchange rate data
   const fetchLive = () => {
@@ -129,20 +122,16 @@ export default function App() {
       });
   };
 
-  const countryDropDownFilter = () => {};
-
   useEffect(() => {
     fetchLive();
     fetchHistorical();
-    // fetchConversionRates();
-    // fetchTimeAccording();
-    // fetchChange();
+    fetchConversionRates();
+    fetchTimeAccording();
+    fetchChange();
     const countryDropDownItems = Object.keys(countries).map(key => {
       return { label: countries[key], value: key };
-      // <DropdownItem value={key}>{countries[key]}</DropdownItem>;
     });
-    console.log(countryDropDownItems);
-    // setCountryDropDown(countryDropDownItems);
+    setCountryDropDown(countryDropDownItems);
   }, []);
 
   return (
@@ -172,18 +161,13 @@ export default function App() {
           </Button>
         </Col>
         <Col sm="4">
-          <Dropdown isOpen={dropdownOpen} toggle={toggle}>
-            <DropdownToggle caret>{"Country"}</DropdownToggle>
-            <DropdownMenu
-              style={{
-                height: "500px",
-                overflow: "auto"
-              }}
-            >
-              <Input placeholder="Search..." onChange={countryDropDownFilter} />
-              {countryDropDown}
-            </DropdownMenu>
-          </Dropdown>
+          <Select
+            options={
+              countryDropDown && countryDropDown.constructor === Array
+                ? countryDropDown
+                : []
+            }
+          />
         </Col>
       </Row>
     </Container>
