@@ -10,6 +10,7 @@ import {
   Badge
 } from "reactstrap";
 import Select from "react-select";
+import DatePicker from "react-date-picker";
 
 import {
   LIVE_URL,
@@ -28,7 +29,9 @@ export default function App() {
   const [history, setHistory] = useState([]);
   const [historyCount, setHistoryCount] = useState(10);
   const [date, setDate] = useState("2010-10-10");
+  const [startDate, setStartDate] = useState(new Date());
   const [countryDropDown, setCountryDropDown] = useState(false);
+  const [selectedOption, setSelectedOption] = useState(null);
 
   // "live" - get the most recent exchange rate data
   const fetchLive = () => {
@@ -56,7 +59,7 @@ export default function App() {
   };
 
   // "historical" - get historical rates for a specific day
-  const fetchHistorical = () => {
+  const fetchHistorical = date => {
     axios({
       method: "get",
       url: `${HISTORICAL_URL}${date}${access_string}`
@@ -122,9 +125,27 @@ export default function App() {
       });
   };
 
+  const fetchHistoricalAgain = event => {
+    setStartDate(event);
+    setDate(convert(event));
+    fetchHistorical(convert(event));
+  };
+
+  const getSelectedRates = event => {
+    setSelectedOption(event);
+    // & currencies = EUR,GBP,CAD,PLN
+  };
+
+  const convert = str => {
+    var date = new Date(str),
+      mnth = ("0" + (date.getMonth() + 1)).slice(-2),
+      day = ("0" + date.getDate()).slice(-2);
+    return [date.getFullYear(), mnth, day].join("-");
+  };
+
   useEffect(() => {
     fetchLive();
-    fetchHistorical();
+    fetchHistorical(date);
     fetchConversionRates();
     fetchTimeAccording();
     fetchChange();
@@ -161,7 +182,15 @@ export default function App() {
           </Button>
         </Col>
         <Col sm="4">
+          <h3>
+            <Badge color="info">
+              Change date to see the exchange rate on a particular date
+            </Badge>
+          </h3>
+          <DatePicker onChange={fetchHistoricalAgain} value={startDate} />
           <Select
+            value={selectedOption}
+            onChange={getSelectedRates}
             options={
               countryDropDown && countryDropDown.constructor === Array
                 ? countryDropDown
