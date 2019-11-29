@@ -9,9 +9,13 @@
   bottom: 0;
   margin: auto;
 }
-.list {
-  height: 500px;
+.list-scroll {
+  height: 590px;
   width: 100%;
   overflow: hidden;
   overflow-y: scroll;
+}
+.table-scroll {
+  height: 400px;
+  overflow: auto;
 }

@@ -7,10 +7,11 @@ import {
   Container,
   Row,
   Col,
-  Badge
+  Badge,
+  Table
 } from "reactstrap";
-import Select from "react-select";
 import DatePicker from "react-date-picker";
+import { Multiselect } from "multiselect-react-dropdown";
 
 import {
   LIVE_URL,
@@ -30,8 +31,10 @@ export default function App() {
   const [historyCount, setHistoryCount] = useState(10);
   const [date, setDate] = useState("2010-10-10");
   const [startDate, setStartDate] = useState(new Date());
-  const [countryDropDown, setCountryDropDown] = useState(false);
-  const [selectedOption, setSelectedOption] = useState(null);
+  const [selected] = useState([]);
+  const [multiSelectTag, setMultiSelectTag] = useState([]);
+  const [multiSelectList, setMultiSelectList] = useState([]);
+  const [comparisonTable, setComparisonTable] = useState([]);
 
   // "live" - get the most recent exchange rate data
   const fetchLive = () => {
@@ -125,15 +128,37 @@ export default function App() {
       });
   };
 
+  // "comparison" - comparison between a group of currencies to a single currency
+  const fetchComparison = () => {
+    const string = multiSelectList.join(",");
+    axios({
+      method: "get",
+      url: `${LIVE_URL}&currencies=${string}&source=USD&format=1`
+    })
+      .then(res => {
+        const { quotes } = res.data;
+        const countryList = Object.keys(countries);
+        const results = Object.keys(quotes).map((key, index) => {
+          const subKey = key.substring(3);
+          return (
+            <tr key={`comparison-${key}}`}>
+              <th scope="row">{index + 1}</th>
+              <td>{countryList.includes(subKey) ? countries[subKey] : ""}</td>
+              <td>{quotes[key]}</td>
+            </tr>
+          );
+        });
+        setComparisonTable(results);
+      })
+      .catch(error => {
+        console.log(error);
+      });
+  };
+
   const fetchHistoricalAgain = event => {
     setStartDate(event);
     setDate(convert(event));
     fetchHistorical(convert(event));
-  };
-
-  const getSelectedRates = event => {
-    setSelectedOption(event);
-    // & currencies = EUR,GBP,CAD,PLN
   };
 
   const convert = str => {
@@ -143,62 +168,132 @@ export default function App() {
     return [date.getFullYear(), mnth, day].join("-");
   };
 
+  const onMultiselect = (optionsList, selectedItem) => {
+    const array1 = multiSelectList;
+    array1.push(selectedItem.value);
+    setMultiSelectList(array1);
+  };
+
   useEffect(() => {
     fetchLive();
     fetchHistorical(date);
     fetchConversionRates();
     fetchTimeAccording();
     fetchChange();
-    const countryDropDownItems = Object.keys(countries).map(key => {
-      return { label: countries[key], value: key };
+    const countryDropDownItems = Object.keys(countries).map((key, index) => {
+      return { id: `country-${index + 1}`, label: countries[key], value: key };
     });
-    setCountryDropDown(countryDropDownItems);
+    setMultiSelectTag(
+      <Multiselect
+        options={
+          countryDropDownItems && countryDropDownItems.constructor === Array
+            ? countryDropDownItems
+            : []
+        } // Options to display in the dropdown
+        selectedvalues={selected} // Preselected value to persist in dropdown
+        onSelect={onMultiselect} // Function will trigger on select event
+        displayValue="label" // Property name to display in the dropdown options
+        selectionLimit={10}
+        style={{
+          chips: {
+            // To change css chips(Selected options)
+            background: "black"
+          }
+        }}
+      />
+    );
   }, []);
 
   return (
-    <Container>
-      <Row>
-        <Col xs="6" sm="4">
-          <h3>
-            <Badge color="primary">Most recent exchange rate</Badge>
-          </h3>
-          <ListGroup className="list">{live.slice(0, liveCount)}</ListGroup>
-          <Button color="primary" onClick={() => setLiveCount(liveCount + 10)}>
-            Load More..
-          </Button>
-        </Col>
-        <Col xs="6" sm="4">
-          <h3>
-            <Badge color="danger">Historical rates for {date}</Badge>
-          </h3>
-          <ListGroup className="list">
-            {history.slice(0, historyCount)}
-          </ListGroup>
-          <Button
-            color="danger"
-            onClick={() => setHistoryCount(historyCount + 10)}
-          >
-            Load More..
-          </Button>
-        </Col>
-        <Col sm="4">
-          <h3>
-            <Badge color="info">
-              Change date to see the exchange rate on a particular date
-            </Badge>
-          </h3>
-          <DatePicker onChange={fetchHistoricalAgain} value={startDate} />
-          <Select
-            value={selectedOption}
-            onChange={getSelectedRates}
-            options={
-              countryDropDown && countryDropDown.constructor === Array
-                ? countryDropDown
-                : []
-            }
-          />
-        </Col>
-      </Row>
-    </Container>
+    <>
+      <header className="w3-container w3-theme w3-padding" id="myHeader">
+        <div className="w3-center">
+          <h1>Currency Conversion</h1>
+        </div>
+      </header>
+
+      <div className="w3-row-padding w3-center w3-margin-top">
+        <div className="w3-third">
+          <div className="w3-card w3-container" style={{ minHeight: "890px" }}>
+            <h3>Most recent exchange rate</h3>
+            <br />
+            <i
+              className="fa fa-exchange w3-margin-bottom w3-text-theme"
+              style={{ fontSize: "116px" }}
+            ></i>
+            <br />
+            <ListGroup className="list-scroll">
+              {live.slice(0, liveCount)}
+            </ListGroup>
+            <br />
+            <Button
+              className="w3-button w3-theme"
+              onClick={() => setLiveCount(liveCount + 10)}
+            >
+              Load More..
+            </Button>
+          </div>
+        </div>
+
+        <div className="w3-third">
+          <div className="w3-card w3-container" style={{ minHeight: "890px" }}>
+            <h3>Historical rates for {date}</h3>
+            <br />
+            <i
+              className="fa fa-calendar w3-margin-bottom w3-text-theme"
+              style={{ fontSize: "90px" }}
+            ></i>
+            <br />
+            <DatePicker onChange={fetchHistoricalAgain} value={startDate} />
+            <br />
+            <ListGroup className="list-scroll">
+              {history.slice(0, historyCount)}
+            </ListGroup>
+            <br />
+            <Button
+              className="w3-button w3-theme"
+              onClick={() => setHistoryCount(historyCount + 10)}
+            >
+              Load More..
+            </Button>
+          </div>
+        </div>
+
+        <div className="w3-third">
+          <div className="w3-card w3-container" style={{ minHeight: "890px" }}>
+            <h3>Comparison with USD</h3>
+            <br />
+            <i
+              className="fa fa-usd w3-margin-bottom w3-text-theme"
+              style={{ fontSize: "116px" }}
+            ></i>
+            {multiSelectTag}
+            <Button className="w3-button w3-theme" onClick={fetchComparison}>
+              Submit
+            </Button>
+            {comparisonTable.length ? (
+              <>
+                <Table>
+                  <thead>
+                    <tr style={{ width: "10%" }}>
+                      <th>S.no</th>
+                      <th>Country</th>
+                      <th>Rate</th>
+                    </tr>
+                  </thead>
+                </Table>
+                <div className="table-scroll">
+                  <Table>
+                    <tbody>{comparisonTable}</tbody>
+                  </Table>
+                </div>
+              </>
+            ) : (
+              <h4>(Table will appear below)</h4>
+            )}
+          </div>
+        </div>
+      </div>
+    </>
   );
 }
